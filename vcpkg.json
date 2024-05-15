@@ -2,11 +2,9 @@
   "name": "terrain-generator",
   "dependencies": [
     "opengl",
-    "gl3w",
-    "glfw3",
-    {
-      "name": "imgui",
-      "features": ["glfw-binding", "opengl3-binding"]
-    }
+    "glew",
+    "sfml",
+    "imgui-sfml",
+    "nlohmann-json"
   ]
 }

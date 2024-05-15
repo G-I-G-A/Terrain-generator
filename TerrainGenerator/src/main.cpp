@@ -1,197 +1,399 @@
-// Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
-// (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
+﻿#include <SFML/Window.hpp>
+#include <GL/glew.h>
+#include <SFML/OpenGL.hpp>
+#include <SFML/Graphics.hpp>
 
-// Learn about Dear ImGui:
-// - FAQ                  https://dearimgui.com/faq
-// - Getting Started      https://dearimgui.com/getting-started
-// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
-// - Introduction, links and more at the top of imgui.cpp
+#include "Shader.h"
+#include "MathHelper.h"
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include <stdio.h>
-#define GL_SILENCE_DEPRECATION
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-#include <GLES2/gl2.h>
-#endif
-#include <GLFW/glfw3.h> // Will drag system OpenGL headers
+#include <array>
+#include <filesystem>
 
-// [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
-// To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
-// Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
-#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
-#pragma comment(lib, "legacy_stdio_definitions")
-#endif
 
-// This example can also compile and run with Emscripten! See 'Makefile.emscripten' for details.
-#ifdef __EMSCRIPTEN__
-#include "../libs/emscripten/emscripten_mainloop_stub.h"
-#endif
-
-static void glfw_error_callback(int error, const char* description)
+template<typename T>
+struct Color3
 {
-    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
-}
+    static constexpr int ndim = 3;
 
-// Main code
-int main(int, char**)
+    Color3(const T& r_ = 0, const T& g_ = 0, const T& b_ = 0)
+        : r(r_)
+        , g(g_)
+        , b(b_)
+    {}
+
+    Color3(const Color3& pt)
+        : r(pt.r)
+        , g(pt.g)
+        , b(pt.b)
+    {}
+
+    T r, g, b;
+};
+
+template<typename T>
+struct Vertex
 {
-    glfwSetErrorCallback(glfw_error_callback);
-    if (!glfwInit())
-        return 1;
+    Point3d<T> position;
+    Point2d<T> texture;
+};
 
-    // Decide GL+GLSL versions
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-    // GL ES 2.0 + GLSL 100
-    const char* glsl_version = "#version 100";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-#elif defined(__APPLE__)
-    // GL 3.2 + GLSL 150
-    const char* glsl_version = "#version 150";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
-#else
-    // GL 3.0 + GLSL 130
-    const char* glsl_version = "#version 130";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
-#endif
-
-    // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", nullptr, nullptr);
-    if (window == nullptr)
-        return 1;
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable vsync
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-#ifdef __EMSCRIPTEN__
-    ImGui_ImplGlfw_InstallEmscriptenCanvasResizeCallback("#canvas");
-#endif
-    ImGui_ImplOpenGL3_Init(glsl_version);
-
-    // Load Fonts
-    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-    // - If the file cannot be loaded, the function will return a nullptr. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-    // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-    // - Read 'docs/FONTS.md' for more instructions and details.
-    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    // - Our Emscripten build process allows embedding fonts to be accessible at runtime from the "fonts/" folder. See Makefile.emscripten for details.
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != nullptr);
-
-    // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    // Main loop
-#ifdef __EMSCRIPTEN__
-    // For an Emscripten build we are disabling file-system access, so let's not attempt to do a fopen() of the imgui.ini file.
-    // You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
-    io.IniFilename = nullptr;
-    EMSCRIPTEN_MAINLOOP_BEGIN
-#else
-    while (!glfwWindowShouldClose(window))
-#endif
+struct Texture
+{
+    explicit Texture(const std::filesystem::path& path)
     {
-        // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-        glfwPollEvents();
+        glGenTextures(1, &m_texture);
+        glBindTexture(GL_TEXTURE_2D, m_texture);
 
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        sf::Image image;
+        image.loadFromFile(path.generic_string());
+        auto size = image.getSize();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getPixelsPtr());
+        glGenerateMipmap(GL_TEXTURE_2D);
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
-
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-
-        // Rendering
-        ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        glfwSwapBuffers(window);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
-#ifdef __EMSCRIPTEN__
-    EMSCRIPTEN_MAINLOOP_END;
-#endif
 
-    // Cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    void bind()
+    {
+        glBindTexture(GL_TEXTURE_2D, m_texture);
+    }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+private:
+    GLuint m_texture;
+};
+
+template<typename T>
+class Triangle
+{
+public:
+    using vertex_type = Vertex<T>;
+
+    Triangle(const vertex_type& p0, const vertex_type& p1, const vertex_type& p2)
+        : m_points{p0, p1, p2}
+        , m_vao(0)
+        , m_vbo(0)
+        , m_texture("D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Textures\\texture.bmp")
+    {
+        load();
+    }
+
+    ~Triangle()
+    {
+        
+    }
+
+    void load()
+    {
+        glGenVertexArrays(1, &m_vao);
+        glBindVertexArray(m_vao);
+
+        glGenBuffers(1, &m_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+        glBufferData(GL_ARRAY_BUFFER, sizeof(m_points), m_points.data(), GL_STATIC_DRAW);
+
+        ShaderInfo shaders[] = {
+            {GL_VERTEX_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\triangle.vert"},
+            {GL_FRAGMENT_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\triangle.frag"},
+            {GL_NONE, nullptr}
+        };
+
+        m_program = Shader::loadShaders(shaders);
+        glUseProgram(m_program);
+
+        // /!\ Attention, ca ne marche que si T=float : c'est un peu dommage.
+        glVertexAttribPointer(0, decltype(vertex_type::position)::ndim, GL_FLOAT, GL_FALSE, sizeof(vertex_type), 0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, decltype(vertex_type::texture)::ndim, GL_FLOAT, GL_FALSE, sizeof(vertex_type), reinterpret_cast<char*>(nullptr) + sizeof(vertex_type::position));
+        glEnableVertexAttribArray(1);
+    }
+
+    void update()
+    {
+        m_alpha += 0.025f;
+    }
+
+    void render(const Mat4<float>& VP)
+    {
+        Mat4<float> rot = Mat4<float>::rotationY(m_alpha);
+
+        Mat4<float> trans = Mat4<float>::translation({3.f, 0.f, -5.f});
+
+        Mat4<float> M = trans * rot;
+        Mat4<float> MVP = VP * M;
+
+        glUseProgram(m_program);
+        glBindVertexArray(m_vao);
+
+        GLuint mvpLocation = glGetUniformLocation(m_program, "MVP");
+        glUniformMatrix4fv(mvpLocation, 1, 0, MVP.data());
+
+        m_texture.bind();
+        glDrawArrays(GL_TRIANGLES, 0, int(m_points.size()));
+    }
+
+private:
+    Texture m_texture;
+    std::array<vertex_type, 3> m_points;
+    GLuint m_vao;
+    GLuint m_vbo;
+    GLuint m_program;
+    float m_alpha = 0;
+};
+
+
+
+template<typename T>
+struct CubeVertex
+{
+    Point3d<T> position;
+    Point3d<T> normal;
+    Color3<T> color;
+};
+
+template<typename T>
+class Cube
+{
+public:
+    using vertex_type = CubeVertex<T>;
+
+    Cube()
+        : m_vao(0)
+        , m_vbo(0)
+    {
+        load();
+    }
+
+    ~Cube()
+    {
+
+    }
+
+    void load()
+    {
+        glGenVertexArrays(1, &m_vao);
+        glBindVertexArray(m_vao);
+
+        glGenBuffers(1, &m_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+        // Allocate storage size units of OpenGL
+        // Copy data from client to server
+
+        Point3d<T> P000 = { -1, -1, -1 }; Point3d<T> P100 = { +1, -1, -1 }; Point3d<T> P010 = { -1, +1, -1 }; Point3d<T> P110 = { +1, +1, -1 };
+        Point3d<T> P001 = { -1, -1, +1 }; Point3d<T> P101 = { +1, -1, +1 }; Point3d<T> P011 = { -1, +1, +1 }; Point3d<T> P111 = { +1, +1, +1 };
+        Color3<T> c100 = { +1, +0, +0 }; Color3<T> c010 = { +0, +1, +0 }; Color3<T> c001 = { +0, +0, +1 };
+        Color3<T> c011 = { +0, +1, +1 }; Color3<T> c101 = { +1, +0, +1 }; Color3<T> c110 = { +1, +1, +0 };
+        Point3d<T> nxn = { -1, 0, 0 }; Point3d<T> nyn = { 0, -1, 0 }; Point3d<T> nzn = { 0, 0, -1 };
+        Point3d<T> nxp = { +1, 0, 0 }; Point3d<T> nyp = { 0, +1, 0 }; Point3d<T> nzp = { 0, 0, +1 };
+
+        using vt = vertex_type;
+        static std::array<vertex_type, 36> points = {
+           vt{P000, nzn, c100}, vt{P100, nzn, c100}, vt{P110, nzn, c100}, vt{P000, nzn, c100}, vt{P110, nzn, c100}, vt{P010, nzn, c100}
+         , vt{P001, nzp, c011}, vt{P101, nzp, c011}, vt{P111, nzp, c011}, vt{P001, nzp, c011}, vt{P111, nzp, c011}, vt{P011, nzp, c011}
+         , vt{P000, nyn, c010}, vt{P100, nyn, c010}, vt{P101, nyn, c010}, vt{P000, nyn, c010}, vt{P101, nyn, c010}, vt{P001, nyn, c010}
+         , vt{P010, nyp, c101}, vt{P110, nyp, c101}, vt{P111, nyp, c101}, vt{P010, nyp, c101}, vt{P111, nyp, c101}, vt{P011, nyp, c101}
+         , vt{P000, nxn, c001}, vt{P010, nxn, c001}, vt{P011, nxn, c001}, vt{P000, nxn, c001}, vt{P011, nxn, c001}, vt{P001, nxn, c001}
+         , vt{P100, nxp, c110}, vt{P110, nxp, c110}, vt{P111, nxp, c110}, vt{P100, nxp, c110}, vt{P111, nxp, c110}, vt{P101, nxp, c110}
+        };
+
+        glBufferData(GL_ARRAY_BUFFER, sizeof(points), points.data(), GL_STATIC_DRAW);
+
+        ShaderInfo shaders[] = {
+            {GL_VERTEX_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\cube.vert"},
+            {GL_FRAGMENT_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\cube.frag"},
+            {GL_NONE, nullptr}
+        };
+
+        m_program = Shader::loadShaders(shaders);
+        glUseProgram(m_program);
+
+        // /!\ Attention, ca ne marche que si T=float : c'est un peu dommage.
+        glVertexAttribPointer(0, decltype(vertex_type::position)::ndim, GL_FLOAT, GL_FALSE, sizeof(vertex_type), 0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, decltype(vertex_type::normal)::ndim, GL_FLOAT, GL_FALSE, sizeof(vertex_type), reinterpret_cast<char*>(nullptr) + sizeof(vertex_type::position));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, decltype(vertex_type::color)::ndim, GL_FLOAT, GL_FALSE, sizeof(vertex_type), reinterpret_cast<char*>(nullptr) + sizeof(vertex_type::position) + sizeof(vertex_type::normal));
+        glEnableVertexAttribArray(2);
+    }
+
+    void update()
+    {
+        m_alpha += 0.025f;
+    }
+
+    void render(const Mat4<float>& VP)
+    {
+        struct OpticalProperties
+        {
+            float ambiant = 0.3f;
+            float diffuse = 0.5f;
+        } opticalProperties;
+
+        struct DirectionalLight
+        {
+            Point3d<T> dir = { 0.0f, -1.0f, 0.0f };
+            Color3<T> color = { 1.0f, 1.0f, 1.0f };
+        } lightProperties;
+
+        Mat4<float> rot = Mat4<float>::rotationY(m_alpha);
+
+        Mat4<float> trans = Mat4<float>::translation({ 0.f, 0.f, -50.f });
+
+        Mat4<float> M = trans * Mat4<float>::rotationX(beta) * Mat4<float>::rotationY(alpha);
+        Mat4<float> MVP = VP * M;
+
+        glUseProgram(m_program);
+        glBindVertexArray(m_vao);
+
+        GLuint mvpLocation = glGetUniformLocation(m_program, "MVP");
+        glUniformMatrix4fv(mvpLocation, 1, 0, MVP.data());
+
+        GLuint modelLocation = glGetUniformLocation(m_program, "model");
+        glUniformMatrix4fv(modelLocation, 1, 0, M.data());
+
+        GLuint ambiant = glGetUniformLocation(m_program, "material.ambiant");
+        glUniform1fv(ambiant, 1, &opticalProperties.ambiant);
+
+        GLuint diffuse = glGetUniformLocation(m_program, "material.diffuse");
+        glUniform1fv(diffuse, 1, &opticalProperties.diffuse);
+
+        GLuint lightDir = glGetUniformLocation(m_program, "light.dir");
+        glUniform3fv(lightDir, 1, reinterpret_cast<float*>(&lightProperties.dir));
+
+        GLuint lightColor = glGetUniformLocation(m_program, "light.color");
+        glUniform3fv(lightColor, 1, reinterpret_cast<float*>(&lightProperties.color));
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+
+public:
+    float alpha = 0;
+    float beta = 0;
+
+private:
+    GLuint m_vao;
+    GLuint m_vbo;
+    GLuint m_program;
+    float m_alpha = 0;
+};
+
+int main()
+{
+    const sf::ContextSettings settings(24, 8, 4, 4, 6);
+
+    // crée la fenêtre
+    sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
+    window.setVerticalSyncEnabled(true);
+
+    // activation de la fenêtre
+    window.setActive(true);
+
+    using VertexF = Vertex<float>;
+    using TriangleF = Triangle<float>;
+    using CubeF = Cube<float>;
+
+    // Les putains de lignes de l’enfer
+    glewExperimental = GL_TRUE;
+    glEnable(GL_DEPTH_TEST);
+    if (glewInit())
+        throw std::runtime_error("Error de merde");
+
+    VertexF p0{ { -0.9f, -0.9f, 0.f }, {-0.9f, 0.9f} };
+    VertexF p1{ { 0.9f, -0.9f, 0.f }, {0.9f, 0.9f} };
+    VertexF p2{ { 0.9f, 0.9f, 0.f }, {0.9f, -0.9f} };
+
+    TriangleF triangle(p0, p1, p2);
+    CubeF cube;
+
+    float aspect = 800.f / 600.f;
+    float fov = 45.f / 180.f * 3.141592f;
+    float n = 0.1f;
+    float f = 100.f;
+
+    Mat4<float> P = Mat4<float>::projection(aspect, fov, n, f);
+
+    float alpha = 0;
+    float beta = 0;
+
+    // la boucle principale
+    bool running = true;
+    bool leftMouseButtonPressed = false;
+
+    sf::Mouse::setPosition({ 400, 300 }, window);
+
+    while (running)
+    {
+        // gestion des évènements
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+            {
+                // on stoppe le programme
+                running = false;
+            }
+            else if (event.type == sf::Event::Resized)
+            {
+                // on ajuste le viewport lorsque la fen�tre est redimensionn�e
+                glViewport(0, 0, event.size.width, event.size.height);
+            }
+            else if (event.type == sf::Event::MouseMoved)
+            {
+                float dx = event.mouseMove.x - 400.f;
+                float dy = event.mouseMove.y - 300.f;
+
+                sf::Mouse::setPosition({ 400, 300 }, window);
+
+                float coef = 0.001f;
+
+                if (!leftMouseButtonPressed)
+                {
+                    alpha += coef * dx;
+                    beta += -coef * dy;
+                }
+                else
+                {
+                    cube.alpha += coef * dx;
+                    cube.beta += -coef * dy;
+                }
+            }
+            else if (event.type == sf::Event::MouseButtonPressed)
+            {
+                if (event.mouseButton.button == sf::Mouse::Left)
+                    leftMouseButtonPressed = true;
+            }
+            else if (event.type == sf::Event::MouseButtonReleased)
+            {
+                if (event.mouseButton.button == sf::Mouse::Left)
+                    leftMouseButtonPressed = false;
+            }
+        }
+
+        // effacement les tampons de couleur/profondeur
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        Mat4<float> V = Mat4<float>::rotationX(-beta) * Mat4<float>::rotationY(-alpha);
+        auto VP = P * V;
+
+        // dessin...
+        triangle.update();
+        triangle.render(VP);
+
+        cube.update();
+        cube.render(VP);
+
+        glFlush();
+
+        // termine la trame courante (en interne, échange les deux tampons de rendu)
+        window.display();
+    }
+
+    // libération des ressources...
 
     return 0;
 }
