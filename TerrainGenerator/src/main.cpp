@@ -9,6 +9,8 @@
 #include <array>
 #include <filesystem>
 
+#include "PerlinNoise.h"
+
 
 template<typename T>
 struct Color3
@@ -76,7 +78,7 @@ public:
         : m_points{p0, p1, p2}
         , m_vao(0)
         , m_vbo(0)
-        , m_texture("Resources\\Textures\\texture.bmp")
+        , m_texture("D:\\GitHub\\Terrain-generator\\Resources\\Textures\\texture.bmp")
     {
         load();
     }
@@ -97,8 +99,8 @@ public:
         glBufferData(GL_ARRAY_BUFFER, sizeof(m_points), m_points.data(), GL_STATIC_DRAW);
 
         ShaderInfo shaders[] = {
-            {GL_VERTEX_SHADER, "Resources\\Shaders\\triangle.vert"},
-            {GL_FRAGMENT_SHADER, "Resources\\Shaders\\triangle.frag"},
+            {GL_VERTEX_SHADER, "D:\\GitHub\\Terrain-generator\\Resources\\Shaders\\triangle.vert"},
+            {GL_FRAGMENT_SHADER, "D:\\GitHub\\Terrain-generator\\Resources\\Shaders\\triangle.frag"},
             {GL_NONE, nullptr}
         };
 
@@ -183,11 +185,13 @@ public:
 
         // Allocate storage size units of OpenGL
         // Copy data from client to server
+     
+        
 
         Point3d<T> P000 = { -1, -1, -1 }; Point3d<T> P100 = { +1, -1, -1 }; Point3d<T> P010 = { -1, +1, -1 }; Point3d<T> P110 = { +1, +1, -1 };
         Point3d<T> P001 = { -1, -1, +1 }; Point3d<T> P101 = { +1, -1, +1 }; Point3d<T> P011 = { -1, +1, +1 }; Point3d<T> P111 = { +1, +1, +1 };
-        Color3<T> c100 = { +1, +0, +0 }; Color3<T> c010 = { +0, +1, +0 }; Color3<T> c001 = { +0, +0, +1 };
-        Color3<T> c011 = { +0, +1, +1 }; Color3<T> c101 = { +1, +0, +1 }; Color3<T> c110 = { +1, +1, +0 };
+        Color3<T> c100 = { +0, +1, +1 }; Color3<T> c010 = { +0, +1, +0 }; Color3<T> c001 = { +0, +0, +1 };
+        Color3<T> c011 = { +1, +0, +0 }; Color3<T> c101 = { +1, +0, +1 }; Color3<T> c110 = { +1, +1, +0 };
         Point3d<T> nxn = { -1, 0, 0 }; Point3d<T> nyn = { 0, -1, 0 }; Point3d<T> nzn = { 0, 0, -1 };
         Point3d<T> nxp = { +1, 0, 0 }; Point3d<T> nyp = { 0, +1, 0 }; Point3d<T> nzp = { 0, 0, +1 };
 
@@ -204,8 +208,8 @@ public:
         glBufferData(GL_ARRAY_BUFFER, sizeof(points), points.data(), GL_STATIC_DRAW);
 
         ShaderInfo shaders[] = {
-            {GL_VERTEX_SHADER, "Resources\\Shaders\\cube.vert"},
-            {GL_FRAGMENT_SHADER, "Resources\\Shaders\\cube.frag"},
+            {GL_VERTEX_SHADER, "D:\\GitHub\\Terrain-generator\\Resources\\Shaders\\cube.vert"},
+            {GL_FRAGMENT_SHADER, "D:\\GitHub\\Terrain-generator\\Resources\\Shaders\\cube.frag"},
             {GL_NONE, nullptr}
         };
 
