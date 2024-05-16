@@ -5,9 +5,12 @@
 
 #include "Shader.h"
 #include "MathHelper.h"
+#include "../include/plane.h"
+#include "../include/Texture.h"
 
 #include <array>
 #include <filesystem>
+
 
 
 template<typename T>
@@ -37,35 +40,6 @@ struct Vertex
     Point2d<T> texture;
 };
 
-struct Texture
-{
-    explicit Texture(const std::filesystem::path& path)
-    {
-        glGenTextures(1, &m_texture);
-        glBindTexture(GL_TEXTURE_2D, m_texture);
-
-        sf::Image image;
-        image.loadFromFile(path.generic_string());
-        auto size = image.getSize();
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getPixelsPtr());
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    }
-
-    void bind()
-    {
-        glBindTexture(GL_TEXTURE_2D, m_texture);
-    }
-
-private:
-    GLuint m_texture;
-};
-
 template<typename T>
 class Triangle
 {
@@ -76,7 +50,7 @@ public:
         : m_points{p0, p1, p2}
         , m_vao(0)
         , m_vbo(0)
-        , m_texture("D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Textures\\texture.bmp")
+        , m_texture("C:\\Users\\paulm\\Documents\\GitHub\\Terrain-generator\\Resources\\Textures\\texture.bmp")
     {
         load();
     }
@@ -97,8 +71,8 @@ public:
         glBufferData(GL_ARRAY_BUFFER, sizeof(m_points), m_points.data(), GL_STATIC_DRAW);
 
         ShaderInfo shaders[] = {
-            {GL_VERTEX_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\triangle.vert"},
-            {GL_FRAGMENT_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\triangle.frag"},
+            {GL_VERTEX_SHADER, "C:\\Users\\paulm\\Documents\\GitHub\\Terrain-generator\\Resources\\Shaders\\triangle.vert"},
+            {GL_FRAGMENT_SHADER, "C:\\Users\\paulm\\Documents\\GitHub\\Terrain-generator\\Resources\\Shaders\\triangle.frag"},
             {GL_NONE, nullptr}
         };
 
@@ -204,8 +178,8 @@ public:
         glBufferData(GL_ARRAY_BUFFER, sizeof(points), points.data(), GL_STATIC_DRAW);
 
         ShaderInfo shaders[] = {
-            {GL_VERTEX_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\cube.vert"},
-            {GL_FRAGMENT_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\cube.frag"},
+            {GL_VERTEX_SHADER, "C:\\Users\\paulm\\Documents\\GitHub\\Terrain-generator\\Resources\\Shaders\\cube.vert"},
+            {GL_FRAGMENT_SHADER, "C:\\Users\\paulm\\Documents\\GitHub\\Terrain-generator\\Resources\\Shaders\\cube.frag"},
             {GL_NONE, nullptr}
         };
 
@@ -282,6 +256,7 @@ private:
     float m_alpha = 0;
 };
 
+
 int main()
 {
     const sf::ContextSettings settings(24, 8, 4, 4, 6);
@@ -325,6 +300,9 @@ int main()
     bool leftMouseButtonPressed = false;
 
     sf::Mouse::setPosition({ 400, 300 }, window);
+
+    TerrainGenerator terrainGenerator(100.f);
+    terrainGenerator.generateTerrain();
 
     while (running)
     {
