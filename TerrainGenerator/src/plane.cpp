@@ -16,7 +16,6 @@ TerrainGenerator::TerrainGenerator(int size)
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
 
-    // Load texture
     // m_texture = Texture("C:\\Users\\paulm\\Documents\\GitHub\\Terrain-generator\\Resources\\Textures\\texture.bmp");
 
     generateTerrain();

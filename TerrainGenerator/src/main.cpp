@@ -306,22 +306,23 @@ int main()
 
     while (running)
     {
-        // gestion des évènements
+        // Gestion des événements
         sf::Event event;
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
             {
-                // on stoppe le programme
+                // Fermeture de la fenêtre
                 running = false;
             }
             else if (event.type == sf::Event::Resized)
             {
-                // on ajuste le viewport lorsque la fen�tre est redimensionn�e
+                // Ajustement du viewport lorsque la fenêtre est redimensionnée
                 glViewport(0, 0, event.size.width, event.size.height);
             }
             else if (event.type == sf::Event::MouseMoved)
             {
+                // Déplacement de la souris (rotation de la caméra)
                 float dx = event.mouseMove.x - 400.f;
                 float dy = event.mouseMove.y - 300.f;
 
@@ -342,32 +343,46 @@ int main()
             }
             else if (event.type == sf::Event::MouseButtonPressed)
             {
+                // Bouton de la souris enfoncé
                 if (event.mouseButton.button == sf::Mouse::Left)
                     leftMouseButtonPressed = true;
             }
             else if (event.type == sf::Event::MouseButtonReleased)
             {
+                // Bouton de la souris relâché
                 if (event.mouseButton.button == sf::Mouse::Left)
                     leftMouseButtonPressed = false;
             }
         }
 
-        // effacement les tampons de couleur/profondeur
+        // Effacement des tampons de couleur/profondeur
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Calcul de la matrice de vue
         Mat4<float> V = Mat4<float>::rotationX(-beta) * Mat4<float>::rotationY(-alpha);
-        auto VP = P * V;
 
-        // dessin...
+        // Calcul de la matrice de projection
+        float aspect = 800.f / 600.f;
+        float fov = 45.f / 180.f * 3.141592f;
+        float n = 0.1f;
+        float f = 100.f;
+        Mat4<float> P = Mat4<float>::projection(aspect, fov, n, f);
+
+        // Calcul de la matrice de vue-projection
+        Mat4<float> VP = P * V;
+
+        // Rendu du terrain
+        terrainGenerator.renderTerrain(VP);
+
+        // Rendu du triangle
         triangle.update();
         triangle.render(VP);
 
+        // Rendu du cube
         cube.update();
         cube.render(VP);
 
-        glFlush();
-
-        // termine la trame courante (en interne, échange les deux tampons de rendu)
+        // Affichage de la trame courante
         window.display();
     }
 
