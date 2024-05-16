@@ -12,7 +12,6 @@
 #include <filesystem>
 
 
-
 template<typename T>
 struct Color3
 {
