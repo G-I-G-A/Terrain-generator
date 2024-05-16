@@ -76,7 +76,7 @@ public:
         : m_points{p0, p1, p2}
         , m_vao(0)
         , m_vbo(0)
-        , m_texture("D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Textures\\texture.bmp")
+        , m_texture("Resources\\Textures\\texture.bmp")
     {
         load();
     }
@@ -97,8 +97,8 @@ public:
         glBufferData(GL_ARRAY_BUFFER, sizeof(m_points), m_points.data(), GL_STATIC_DRAW);
 
         ShaderInfo shaders[] = {
-            {GL_VERTEX_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\triangle.vert"},
-            {GL_FRAGMENT_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\triangle.frag"},
+            {GL_VERTEX_SHADER, "Resources\\Shaders\\triangle.vert"},
+            {GL_FRAGMENT_SHADER, "Resources\\Shaders\\triangle.frag"},
             {GL_NONE, nullptr}
         };
 
@@ -204,8 +204,8 @@ public:
         glBufferData(GL_ARRAY_BUFFER, sizeof(points), points.data(), GL_STATIC_DRAW);
 
         ShaderInfo shaders[] = {
-            {GL_VERTEX_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\cube.vert"},
-            {GL_FRAGMENT_SHADER, "D:\\Cours\\Master2\\C++\\Terrain-generator\\Resources\\Shaders\\cube.frag"},
+            {GL_VERTEX_SHADER, "Resources\\Shaders\\cube.vert"},
+            {GL_FRAGMENT_SHADER, "Resources\\Shaders\\cube.frag"},
             {GL_NONE, nullptr}
         };
 
@@ -396,4 +396,4 @@ int main()
     // libération des ressources...
 
     return 0;
-}
+};
