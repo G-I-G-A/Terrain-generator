@@ -8,7 +8,41 @@
 
 #include <array>
 #include <filesystem>
+#include <iostream>
 
+#include "MVP/Signal.h"
+
+#include "MVP/Presenter.h"
+
+#define USE_SIGNAL_EXEMPLE 0
+#define USE_MVP_EXEMPLE 1
+
+#if USE_MVP_EXEMPLE
+
+class ExemplePresenter : public Presenter<Model, View>
+{
+public:
+    ExemplePresenter()
+        : Presenter()
+        , m_connection(m_model->signal.connectScoped(
+            [this](const std::string& message)
+            {
+                m_view->display(message);
+            }))
+    {
+        std::cout << "ExemplePresenter()" << std::endl;
+    }
+
+    Model* getModel() const
+    {
+        return m_model;
+    }
+
+private:
+    details::scoped_connection<std::string> m_connection;
+};
+
+#endif 
 
 template<typename T>
 struct Color3
@@ -282,7 +316,7 @@ private:
     float m_alpha = 0;
 };
 
-int main()
+/*int main()
 {
     const sf::ContextSettings settings(24, 8, 4, 4, 6);
 
@@ -394,6 +428,53 @@ int main()
     }
 
     // libération des ressources...
+
+    return 0;
+}*/
+
+int main(int argc, char** argv)
+{
+    //
+#if USE_SIGNAL_EXEMPLE
+    Signal<int, int> signal;
+
+    signal.connect([&](int a, int b)
+        {
+            std::cout << a + b << std::endl;
+        });
+
+    signal.notify(3, 5);
+    {
+        auto scopedConnection = signal.connectScoped([&](int a, int b)
+            {
+                std::cout << "From scoped" << std::endl;
+            });
+        signal.notify(4, 2);
+    }
+
+    signal.notify(5, 18);
+
+    Object obj(signal);
+
+    {
+        signal.notify(3, 9);
+        auto blocker = obj.connection.scopedBlock();
+        signal.notify(4, 9);
+        signal.notify(4, 9);
+        signal.notify(4, 9);
+        signal.notify(4, 9);
+        signal.notify(4, 9);
+    }
+    signal.notify(3, 9);
+#endif
+    //
+
+#if USE_MVP_EXEMPLE
+
+    ExemplePresenter presenter;
+    presenter.getModel()->databaseUpdate();
+
+#endif 
 
     return 0;
 }
