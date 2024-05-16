@@ -1,5 +1,7 @@
-#pragma once
+#ifndef MATHHELPER_H
+#define MATHHELPER_H
 
+#include <cmath>
 #include <array>
 #include <type_traits>
 
@@ -42,6 +44,31 @@ struct Point3d
     T x;
     T y;
     T z;
+};
+
+template<typename T>
+struct Point4d
+{
+    static constexpr int ndim = 4;
+
+    Point4d(const T& x_ = 0, const T& y_ = 0, const T& z_ = 0, const T& w_ = 0)
+        : x(x_)
+        , y(y_)
+        , z(z_)
+        , w(w_)
+    {}
+
+    Point4d(const Point4d& pt)
+        : x(pt.x)
+        , y(pt.y)
+        , z(pt.z)
+        , w(pt.w)
+    {}
+
+    T x;
+    T y;
+    T z;
+    T w;
 };
 
 struct AxisX
@@ -174,3 +201,5 @@ Mat4<T> operator*(const Mat4<T>& op1, const Mat4<T>& op2)
 
     return result;
 }
+
+#endif MATHHELPER_H

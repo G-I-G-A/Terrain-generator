@@ -6,8 +6,7 @@
 #include <cmath>
 
 TerrainGenerator::TerrainGenerator(int size) 
-    : m_size(size) 
-    , m_texture(Texture("C:\\Users\\paulm\\Documents\\GitHub\\Terrain-generator\\Resources\\Textures\\texture.bmp"))
+    : m_size(size)
 {
     // Initialize OpenGL objects
     glGenVertexArrays(1, &m_vao);
@@ -15,8 +14,6 @@ TerrainGenerator::TerrainGenerator(int size)
 
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-
-    // m_texture = Texture("C:\\Users\\paulm\\Documents\\GitHub\\Terrain-generator\\Resources\\Textures\\texture.bmp");
 
     generateTerrain();
 }
@@ -41,7 +38,6 @@ void TerrainGenerator::renderTerrain(const Mat4<float>& VP) {
 
     // Set up shader program and texture
     glUseProgram(m_program);
-    m_texture.bind();
 
     // Set up MVP matrix
     GLuint mvpLocation = glGetUniformLocation(m_program, "MVP");

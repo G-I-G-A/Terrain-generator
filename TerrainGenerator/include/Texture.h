@@ -1,10 +1,13 @@
-#pragma once
+#ifndef TEXTURE_H
+#define TEXTURE_H
 
 #include <SFML/Window.hpp>
 #include <GL/glew.h>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
 #include <filesystem>
+
+static std::string textureFolderPath = "Resources/Shaders/";
 
 struct Texture
 {
@@ -14,7 +17,7 @@ struct Texture
         glBindTexture(GL_TEXTURE_2D, m_texture);
 
         sf::Image image;
-        image.loadFromFile(path.generic_string());
+        image.loadFromFile(textureFolderPath + path.generic_string());
         auto size = image.getSize();
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getPixelsPtr());
@@ -34,3 +37,5 @@ struct Texture
 private:
     GLuint m_texture;
 };
+
+#endif TEXTURE_H

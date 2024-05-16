@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PLANE_H
+#define PLANE_H
 
 #include "Texture.h"
 #include "MathHelper.h"
@@ -21,7 +22,8 @@ private:
     GLuint m_vao;
     GLuint m_vbo;
     GLuint m_program;
-    Texture m_texture;
 
     void generateMap();
 };
+
+#endif PLANE_H
