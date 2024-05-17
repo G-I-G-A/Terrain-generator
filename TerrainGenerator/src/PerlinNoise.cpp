@@ -1,5 +1,7 @@
 #include "PerlinNoise.h"
 #include <iostream>
+#include <cmath>
+#include <algorithm>
 
 vector2 randomGradient(int ix, int iy, int seed) {
     const unsigned w = 8 * sizeof(unsigned);
@@ -23,14 +25,21 @@ float dotGridGradient(int ix, int iy, float x, float y, int seed) {
     vector2 gradient = randomGradient(ix, iy, seed);
     float dx = x - (float)ix;
     float dy = y - (float)iy;
-    return (dx * gradient.x + dy * gradient.y);
+
+    // Scale the gradient vectors to ensure the dot product is within [-1, 1]
+    float dotProduct = (dx * gradient.x + dy * gradient.y); 
+    return dotProduct;
 }
 
 float interpolate(float a0, float a1, float w) {
-    return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
+    w = std::max(0.0f, std::min(1.0f, w));
+
+    // Perform interpolation and return result
+    return (1 - w) * a0 + w * a1;
 }
 
-float perlin(float x, float y, int seed) {
+float perlin(float x, float y, int seed) 
+{
     int x0 = (int)x;
     int y0 = (int)y;
     int x1 = x0 + 1;
@@ -47,6 +56,8 @@ float perlin(float x, float y, int seed) {
     n1 = dotGridGradient(x1, y1, x, y, seed);
     float ix1 = interpolate(n0, n1, sx);
 
+    std::cout << std::max(0.f, interpolate(ix0, ix1, sy));
+    std::cout << " " << std::endl;
     return std::max(0.f, interpolate(ix0, ix1, sy));
 }
 
