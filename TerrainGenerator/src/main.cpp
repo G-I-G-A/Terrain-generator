@@ -21,6 +21,7 @@ Camera camera({ 1.f, 3.f, 5.f }, { 0.f, 1.f, 0.f }, -90, -4);
 
 // Mouse settings
 bool freeCamera = false;
+bool freeCameraButtonPressed = false;
 bool firstMouse = true;
 float lastMouseX = SCREEN_WIDTH / 2.0f;
 float lastMouseY = SCREEN_HEIGHT / 2.0f;
@@ -65,13 +66,17 @@ void ProcessInputs(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS)
         glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 
-    if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS && freeCameraButtonPressed == false)
     {
+        freeCameraButtonPressed = true;
         freeCamera = !freeCamera;
         if (freeCamera)
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         else glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
+
+    if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_RELEASE)
+        freeCameraButtonPressed = false;
 
     // Process Camera movement
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -208,7 +213,7 @@ int main()
         std::string fps = "FPS: " + std::to_string(static_cast<int>(1.f / deltaTime));
         ImGui::Text(fps.c_str()); 
 
-        ImGui::Text("==========================================");
+        ImGui::Separator();
         
         ImGui::SliderInt("Integer Slider", &seed, 0, 1000);
         if (ImGui::Button("Regenerate Terrain"))
@@ -216,7 +221,7 @@ int main()
             terrain.generateTerrain(seed);
         }
 
-        ImGui::Text("==========================================");
+        ImGui::Separator();
         ImGui::Text("Escape: Close");
         ImGui::Text("Z: Forward");
         ImGui::Text("Q: Left");
