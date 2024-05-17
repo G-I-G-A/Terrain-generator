@@ -36,7 +36,7 @@ int main()
     if (glewInit())
         throw std::runtime_error("Error de merde");
 
-    TerrainF terrain(1000);
+    TerrainF terrain(100);
     Camera camera({ 0.0f, 0.0f, 3.0f });
 
     float aspect = 800.f / 600.f;

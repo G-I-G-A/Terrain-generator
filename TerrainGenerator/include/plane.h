@@ -8,6 +8,7 @@
 #include "Color3.h"
 #include "MathHelper.h"
 #include "Shader.h"
+#include "PerlinNoise.h"
 
 template<typename T>
 struct PlaneVertex
@@ -47,7 +48,7 @@ public:
     }
     void generateTerrain()
     {
-        float step = 2.0f / (m_size - 1);
+        float step = 8.0f / (m_size - 1);
         generateMap(step);
 
         // Generate terrain geometry
@@ -130,7 +131,7 @@ private:
                 z = -1.0f + i * step;
 
                 // Define a simple height function (e.g., sine wave)
-                m_map[i * m_size + j] = std::sin(x * 3.14f) * std::cos(z * 3.14f);
+                m_map[i * m_size + j] = perlin(x, z, 0);
             }
         }
     }
