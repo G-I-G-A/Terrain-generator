@@ -3,8 +3,10 @@
   "dependencies": [
     "opengl",
     "glew",
-    "sfml",
-    "imgui-sfml",
-    "nlohmann-json"
+    "glfw3",
+    {
+      "name": "imgui",
+      "features": ["glfw-binding", "opengl3-binding"]
+    }
   ]
 }

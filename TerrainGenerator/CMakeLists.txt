@@ -14,10 +14,8 @@ configure_target(TerrainGenerator)
 target_link_libraries(TerrainGenerator 
     PRIVATE
     GLEW::GLEW
-    OpenGL::GL    
-    sfml-system sfml-graphics sfml-window sfml-audio
-    imgui::imgui        
-    ImGui-SFML::ImGui-SFML
-    nlohmann_json::nlohmann_json
+    OpenGL::GL           
+    glfw
+    imgui::imgui
 )
 

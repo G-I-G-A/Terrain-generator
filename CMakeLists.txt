@@ -11,12 +11,9 @@ set(CMAKE_CXX_STANDARD 20)
 # vcpkg dependencies
 find_package(OpenGL REQUIRED)
 find_package(glew CONFIG REQUIRED)
-find_package(SFML COMPONENTS system window graphics audio CONFIG REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
-find_package(ImGui-SFML CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
 
-# add_subdirectory(MathLibrary)
 add_subdirectory(TerrainGenerator)
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT TerrainGenerator)

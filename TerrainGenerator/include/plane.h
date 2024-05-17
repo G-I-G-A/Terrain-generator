@@ -4,7 +4,6 @@
 #include <vector>
 #include <GL/glew.h>
 
-#include "Texture.h"
 #include "Color3.h"
 #include "MathHelper.h"
 #include "Shader.h"

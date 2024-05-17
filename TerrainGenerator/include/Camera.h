@@ -11,8 +11,7 @@ enum class CameraMovement
 	LEFT,
 	RIGHT,
 	UP,
-	DOWN,
-	COUNT = 6
+	DOWN
 };
 
 // Default constant camera values
@@ -33,14 +32,15 @@ public:
 	Mat4<float> GetViewMatrix() const;
 	Mat4<float> GetProjectionMatrix(int windowWidth, int windowHeight) const;
 
-	virtual void ProcessKeyboardInput(CameraMovement direction, bool pressed);
-	virtual void ProcessKeyboardInputs(float deltatime);
+	virtual void ProcessKeyboardInputs(CameraMovement direction);
 	virtual void ProcessMouseMovementInputs(float xPos, float yPos, bool constraintPitch = true);
 	virtual void ProcessMouseScrollInputs(float yoffset);
 
-	static Camera* main;
+	void SetDeltaTime(float deltaTime);
 
 private:
+	float m_deltaTime;
+
 	Point3d<float> m_position;
 	Point3d<float> m_up;
 	Point3d<float> m_right;
@@ -53,8 +53,6 @@ private:
 	float m_movementSpeed;
 	float m_mouseSensitivity;
 	float m_fov;
-
-	std::array<bool, 6> m_pressedKeys;
 
 	void UpdateCameraVectors();
 };

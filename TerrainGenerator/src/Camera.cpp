@@ -1,15 +1,11 @@
 #include "Camera.h"
 
-Camera* Camera::main = nullptr;
-
 Camera::Camera(const Point3d<float>& position, const Point3d<float>& up, float yaw, float pitch) :
 	m_front({0.f, 0.f, -1.f}),
 	m_movementSpeed(SPEED),
 	m_mouseSensitivity(SENSITIVITY),
 	m_fov(FOV)
 {
-	m_pressedKeys.fill(false);
-
 	m_position = position;
 	m_worldUp = up;
 	m_yaw = yaw;
@@ -40,32 +36,35 @@ Mat4<float> Camera::GetProjectionMatrix(int windowWidth, int windowHeight) const
 	return  Mat4<float>::projection(Math::Radians(m_fov), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
 }
 
-void Camera::ProcessKeyboardInput(CameraMovement direction, bool pressed)
+void Camera::ProcessKeyboardInputs(CameraMovement direction)
 {
-	m_pressedKeys[static_cast<int>(direction)] = pressed;
-}
-
-void Camera::ProcessKeyboardInputs(float deltatime)
-{
-	float velocity = m_movementSpeed * deltatime;
-
-	if (m_pressedKeys[0]) // FORWARD
+	float velocity = m_movementSpeed * m_deltaTime;
+	switch (direction)
+	{
+	case CameraMovement::FORWARD:
 		m_position += velocity * m_front;
+		break;
 
-	if (m_pressedKeys[1]) // BACKWARD
+	case CameraMovement::BACKWARD:
 		m_position -= velocity * m_front;
+		break;
 
-	if (m_pressedKeys[2]) // LEFT
+	case CameraMovement::LEFT:
 		m_position -= Math::Normalize(Math::Cross(m_front, m_up)) * velocity;
+		break;
 
-	if (m_pressedKeys[3]) // RIGHT
+	case CameraMovement::RIGHT:
 		m_position += Math::Normalize(Math::Cross(m_front, m_up)) * velocity;
+		break;
 
-	if (m_pressedKeys[4]) // UP
+	case CameraMovement::UP:
 		m_position += velocity * m_up;
-	
-	if (m_pressedKeys[5]) // DOWN
+		break;
+
+	case CameraMovement::DOWN:
 		m_position -= velocity * m_up;
+		break;
+	}
 }
 
 void Camera::ProcessMouseMovementInputs(float xPos, float yPos, bool constraintPitch)
@@ -96,15 +95,24 @@ void Camera::ProcessMouseScrollInputs(float yOffset)
 		m_fov = 80.0f;
 }
 
+void Camera::SetDeltaTime(float deltaTime)
+{
+	m_deltaTime = deltaTime;
+}
+
 void Camera::UpdateCameraVectors()
 {
+	// Calculate the new front vector
 	Point3d<float> front(
 		cos(Math::Radians(m_yaw)) * cos(Math::Radians(m_pitch)),
 		sin(Math::Radians(m_pitch)),
 		sin(Math::Radians(m_yaw)) * cos(Math::Radians(m_pitch))
 	);
 
+	// Normalize the front vector
 	m_front = Math::Normalize(front);
+
+	// Recalculate the right and up vectors based on the new front vector
 	m_right = Math::Normalize(Math::Cross(m_front, m_worldUp));
 	m_up = Math::Normalize(Math::Cross(m_right, m_front));
 }

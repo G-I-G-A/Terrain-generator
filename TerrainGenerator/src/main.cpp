@@ -1,144 +1,196 @@
-﻿#include <SFML/Window.hpp>
-#include <GL/glew.h>
-#include <SFML/OpenGL.hpp>
-#include <SFML/Graphics.hpp>
+﻿#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <imgui.h>
-#include <imgui-SFML.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 #include <array>
 #include <filesystem>
 
 #include "Shader.h"
-#include "Texture.h"
 #include "Plane.h"
 #include "Camera.h"
+#include <iostream>
+
+// Screen settings
+const unsigned int SCREEN_WIDTH = 800;
+const unsigned int SCREEN_HEIGHT = 600;
+
+// Camera
+Camera camera({ 0.f, 2.f, 3.f }, { 0.f, 1.f, 0.f });
+
+// Mouse settings
+bool freeCamera = true;
+bool firstMouse = true;
+float lastMouseX = SCREEN_WIDTH / 2.0f;
+float lastMouseY = SCREEN_HEIGHT / 2.0f;
+
+// Cursor settings
+bool cursorShown = true;
+
+// Time
+float currentTime, lastFrameTime = glfwGetTime();
+float deltaTime = 0;
+
+void SetWindowHints()
+{
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // OpenGL 3.3
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+}
+
+void TerminateWindow(GLFWwindow* window)
+{
+    glfwDestroyWindow(window);
+    glfwTerminate();
+}
+
+void ProcessInputs(GLFWwindow* window)
+{
+    // Close the game on espace
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+
+    // Process Polygon mode changes
+    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+
+    if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS)
+    {
+        freeCamera = !freeCamera;
+        if (freeCamera)
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        else glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
+    // Process Camera movement
+    if (freeCamera)
+    {
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.ProcessKeyboardInputs(CameraMovement::FORWARD);
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.ProcessKeyboardInputs(CameraMovement::BACKWARD);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.ProcessKeyboardInputs(CameraMovement::LEFT);
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.ProcessKeyboardInputs(CameraMovement::RIGHT);
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            camera.ProcessKeyboardInputs(CameraMovement::DOWN);
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+            camera.ProcessKeyboardInputs(CameraMovement::UP);
+    }
+}
+
+void HandleMouseCallback(GLFWwindow* window, double xPos, double yPos)
+{
+    if (firstMouse)
+    {
+        lastMouseX = xPos;
+        lastMouseY = yPos;
+
+        firstMouse = false;
+    }
+
+    float xOffset = xPos - lastMouseX;
+    float yOffset = yPos - lastMouseY;
+    lastMouseX = xPos;
+    lastMouseY = yPos;
+
+    camera.ProcessMouseMovementInputs(xOffset, yOffset);
+}
+
+void HandlescrollCallback(GLFWwindow* window, double xOffset, double yOffset)
+{
+    camera.ProcessMouseScrollInputs(yOffset);
+}
+
+void HandleFramebufferSize(GLFWwindow* windo, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
 
 int main()
 {
-    const sf::ContextSettings settings(24, 8, 4, 4, 6);
+    if (!glfwInit())
+    {
+        std::cerr << "GLFW Initialisation failed." << std::endl;
 
-    // crée la fenêtre
-    sf::Clock clock;
-    sf::RenderWindow window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
-    window.setVerticalSyncEnabled(true);
+        return -1;
+    }
 
-    // activation de la fenêtre
-    window.setActive(true);
+    // Initialise GLFW Context
+    SetWindowHints();
 
-    // Init ImGUI
-    ImGui::SFML::Init(window);
+    // Creating window
+    GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Simulation", nullptr, nullptr);
+    if (window == nullptr)
+    {
+        std::cerr << "GLFW Window creation failed." << std::endl;
+        glfwTerminate();
+
+        return -2;
+    }
+
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, HandleFramebufferSize);
+    glfwSetCursorPosCallback(window, HandleMouseCallback);
+    glfwSetScrollCallback(window, HandlescrollCallback);
+
+    // Initialise GLEW
+    glewExperimental = GLFW_TRUE;
+    if (glewInit() != GLEW_OK)
+    {
+        std::cerr << "Glew Initialisation failed." << std::endl;
+        TerminateWindow(window);
+
+        return -3;
+    }
+
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+
+    // Enable alpha values
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Enable depth values
+    glEnable(GL_DEPTH_TEST);
+
+    // Disable cursor at start
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // Initialise ImGUI
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
 
     using TerrainF = Terrain<float>;
-
-    // Les putains de lignes de l’enfer
-    glewExperimental = GL_TRUE;
-    if (glewInit())
-        throw std::runtime_error("Error de merde");
-
-    // Set up OpenGL (optional)
-    glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-    glClearDepth(1.f);
-    glClearColor(0.1f, 0.1f, 0.1f, 1.f);
-
     TerrainF terrain(100);
-    Camera camera({ 1.0f, 2.0f, 6.0f }, { 0.f, 1.f, 0.f });
 
-    // la boucle principale
-    bool running = true;
-    bool freeCamera = true;
-
-    sf::Mouse::setPosition({ 400, 300 }, window);
-    window.setMouseCursorVisible(!freeCamera);
-
-    while (running)
+    while (!glfwWindowShouldClose(window))
     {
-        // Gestion des événements
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            ImGui::SFML::ProcessEvent(event);
+        lastFrameTime = currentTime;
+        currentTime = glfwGetTime();
+        deltaTime = currentTime - lastFrameTime;
 
-            if (event.type == sf::Event::Closed)
-            {
-                // Fermeture de la fenêtre
-                running = false;
-            }
-            else if (event.type == sf::Event::Resized)
-            {
-                // Ajustement du viewport lorsque la fenêtre est redimensionnée
-                glViewport(0, 0, event.size.width, event.size.height);
-            }
-            else if (event.type == sf::Event::MouseMoved)
-            {
-                if (freeCamera)
-                {
-                    float xPos = event.mouseMove.x - 400.f;
-                    float yPos = event.mouseMove.y - 300.f;
+        camera.SetDeltaTime(deltaTime);
 
-                    camera.ProcessMouseMovementInputs(-xPos, -yPos);
-                    sf::Mouse::setPosition({ 400, 300 }, window);
-                }
-            }
-            else if (event.type == sf::Event::KeyPressed)
-            {
-                if (event.key.code == sf::Keyboard::F1)
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                if (event.key.code == sf::Keyboard::F2)
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                if (event.key.code == sf::Keyboard::F3)
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-
-                if (event.key.code == sf::Keyboard::F5)
-                {
-                    freeCamera = !freeCamera;
-                    window.setMouseCursorVisible(!freeCamera);
-                    sf::Mouse::setPosition({ 400, 300 }, window);
-                }
-
-                if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
-                    camera.ProcessKeyboardInput(CameraMovement::FORWARD, true);
-                if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
-                    camera.ProcessKeyboardInput(CameraMovement::BACKWARD, true);
-                if (event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Left)
-                    camera.ProcessKeyboardInput(CameraMovement::LEFT, true);
-                if (event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
-                    camera.ProcessKeyboardInput(CameraMovement::RIGHT, true);
-                if (event.key.code == sf::Keyboard::Space)
-                    camera.ProcessKeyboardInput(CameraMovement::UP, true);
-                if (event.key.code == sf::Keyboard::LShift || event.key.code == sf::Keyboard::RShift)
-                    camera.ProcessKeyboardInput(CameraMovement::DOWN, true);
-            }
-            else if (event.type == sf::Event::KeyReleased)
-            {
-                if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
-                    camera.ProcessKeyboardInput(CameraMovement::FORWARD, false);
-                if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
-                    camera.ProcessKeyboardInput(CameraMovement::BACKWARD, false);
-                if (event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Left)
-                    camera.ProcessKeyboardInput(CameraMovement::LEFT, false);
-                if (event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
-                    camera.ProcessKeyboardInput(CameraMovement::RIGHT, false);
-                if (event.key.code == sf::Keyboard::Space)
-                    camera.ProcessKeyboardInput(CameraMovement::UP, false);
-                if (event.key.code == sf::Keyboard::LShift || event.key.code == sf::Keyboard::RShift)
-                    camera.ProcessKeyboardInput(CameraMovement::DOWN, false);
-            }
-            else if (event.type == sf::Event::MouseWheelScrolled)
-            {
-                camera.ProcessMouseScrollInputs(event.mouseWheelScroll.delta);
-            }
-        }
-
-        sf::Time deltaTime = clock.restart();
-        camera.ProcessKeyboardInputs(deltaTime.asSeconds());
-
-        // Effacement des tampons de couleur/profondeur
+        // Clear render
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+
+        // Inputs
+        ProcessInputs(window);
 
         Mat4<float> V = camera.GetViewMatrix();
-        Mat4<float> P = camera.GetProjectionMatrix(800, 600);
+        Mat4<float> P = camera.GetProjectionMatrix(SCREEN_WIDTH, SCREEN_HEIGHT);
 
         // Calcul de la matrice de vue-projection
         Mat4<float> VP = P * V;
@@ -146,12 +198,44 @@ int main()
         // Rendu du terrain
         terrain.renderTerrain(VP);
 
-        // Affichage de la frame courante
-        window.display();
+        // ImGUI new frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // Imgui render
+        ImGui::Begin("Configs");
+        std::string fps = "FPS: " + std::to_string(static_cast<int>(1.f / deltaTime));
+        ImGui::Text(fps.c_str());
+
+        ImGui::Text("==========================================");
+        ImGui::Text("Escape: Close");
+        ImGui::Text("Z: Forward");
+        ImGui::Text("Q: Left");
+        ImGui::Text("S: BackWard");
+        ImGui::Text("D: Right");
+        ImGui::Text("Space: Up");
+        ImGui::Text("LShift: Down");
+        ImGui::Text("F1: Polygon Mode");
+        ImGui::Text("F2: Wireframe Mode");
+        ImGui::Text("F3: Point Mode");
+        ImGui::Text("F5: Free Camera ON / OFF");
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Swap buffer with the front buffer
+        glfwSwapBuffers(window);
+        // Take care of GLFW events
+        glfwPollEvents();
     }
 
-    // libération des ressources...
-    ImGui::SFML::Shutdown();
+    // Terminate ImGui
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
+    TerminateWindow(window);
     return 0;
 }
