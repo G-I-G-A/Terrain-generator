@@ -7,4 +7,4 @@ Mourgues Paul
 Auriol Thomas
 
 run ./install.bat
-copy Resources folder in build->TerrainGenerator
+enjoy
