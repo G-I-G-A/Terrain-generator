@@ -5,3 +5,6 @@ In this project, we work with procedural generation and OpenGL. The goal is to c
 Juvetin Ariitea 
 Mourgues Paul
 Auriol Thomas
+
+run ./install.bat
+copy Resources folder in build->TerrainGeneraot
