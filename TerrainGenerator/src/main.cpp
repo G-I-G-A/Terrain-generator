@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
+#include <imgui.h>
 #include <imgui-SFML.h>
 
 #include <array>
@@ -18,7 +19,7 @@ int main()
 
     // crée la fenêtre
     sf::Clock clock;
-    sf::RenderWindow  window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
+    sf::RenderWindow window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
     window.setVerticalSyncEnabled(true);
 
     // activation de la fenêtre
@@ -35,7 +36,7 @@ int main()
     if (glewInit())
         throw std::runtime_error("Error de merde");
 
-    TerrainF terrain(100);
+    TerrainF terrain(1000);
     Camera camera({ 0.0f, 0.0f, 3.0f });
 
     float aspect = 800.f / 600.f;
@@ -48,9 +49,12 @@ int main()
     float alpha = 0;
     float beta = 0;
 
+    float lastMouseX;
+    float lastMouseY;
+
     // la boucle principale
     bool running = true;
-    bool leftMouseButtonPressed = false;
+    bool firstMouse = true;
 
     sf::Mouse::setPosition({ 400, 300 }, window);
 
@@ -60,6 +64,8 @@ int main()
         sf::Event event;
         while (window.pollEvent(event))
         {
+            ImGui::SFML::ProcessEvent(event);
+
             if (event.type == sf::Event::Closed)
             {
                 // Fermeture de la fenêtre
@@ -72,31 +78,23 @@ int main()
             }
             else if (event.type == sf::Event::MouseMoved)
             {
-                // Déplacement de la souris (rotation de la caméra)
-                float dx = event.mouseMove.x - 400.f;
-                float dy = event.mouseMove.y - 300.f;
+                float xPos = event.mouseMove.x;
+                float yPos = event.mouseMove.y;
 
-                sf::Mouse::setPosition({ 400, 300 }, window);
-
-                float coef = 0.001f;
-
-                if (!leftMouseButtonPressed)
+                if (firstMouse)
                 {
-                    alpha += coef * dx;
-                    beta += -coef * dy;
+                    lastMouseX = xPos;
+                    lastMouseY = yPos;
+
+                    firstMouse = false;
                 }
-            }
-            else if (event.type == sf::Event::MouseButtonPressed)
-            {
-                // Bouton de la souris enfoncé
-                if (event.mouseButton.button == sf::Mouse::Left)
-                    leftMouseButtonPressed = true;
-            }
-            else if (event.type == sf::Event::MouseButtonReleased)
-            {
-                // Bouton de la souris relâché
-                if (event.mouseButton.button == sf::Mouse::Left)
-                    leftMouseButtonPressed = false;
+
+                float xOffset = xPos - lastMouseX;
+                float yOffset = yPos - lastMouseY;
+                lastMouseX = xPos;
+                lastMouseY = yPos;
+
+                camera.ProcessMouseMovementInputs(xOffset, yOffset, false);
             }
             else if (event.type == sf::Event::KeyPressed)
             {
@@ -130,16 +128,13 @@ int main()
             }
         }
 
-        float deltaTime = clock.restart().asSeconds();
-        camera.ProcessKeyboardInputs(deltaTime);
+        sf::Time deltaTime = clock.restart();
+        camera.ProcessKeyboardInputs(deltaTime.asSeconds());
 
-        // Effacement des tampons de couleur/profondeur
+        // Effacement des tampons de couleur/profondeur 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //Mat4<float> V = camera.GetViewMatrix();
-
-        // Calcul de la matrice de vue
-        Mat4<float> V = Mat4<float>::rotationX(-beta) * Mat4<float>::rotationY(-alpha);
+        Mat4<float> V = camera.GetViewMatrix();
         Mat4<float> P = camera.GetProjectionMatrix(800, 600);
 
         // Calcul de la matrice de vue-projection

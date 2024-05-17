@@ -8,6 +8,8 @@ Camera::Camera(const Point3d<float>& position, const Point3d<float>& up, float y
 	m_mouseSensitivity(SENSITIVITY),
 	m_fov(FOV)
 {
+	m_pressedKeys.fill(false);
+
 	m_position = position;
 	m_worldUp = up;
 	m_yaw = yaw;
