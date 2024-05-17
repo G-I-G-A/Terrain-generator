@@ -8,5 +8,5 @@ out vec4 materialColor;
 
 void main() {
     gl_Position = MVP * vec4(position, 1.0);
-    materialColor = vec4(position.xz, 0.0, 1.0);
+    materialColor = vec4(0.0, 1.0, 0.0, 1.0);
 }
