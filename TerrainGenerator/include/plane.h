@@ -131,7 +131,7 @@ private:
                 z = -1.0f + i * step;
 
                 // Define a simple height function (e.g., sine wave)
-                m_map[i * m_size + j] = perlin(x, z, 0);
+                m_map[i * m_size + j] = perlin(x, z, 10);
             }
         }
     }

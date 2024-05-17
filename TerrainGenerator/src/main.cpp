@@ -37,26 +37,14 @@ int main()
         throw std::runtime_error("Error de merde");
 
     TerrainF terrain(100);
-    Camera camera({ 0.0f, 0.0f, 3.0f });
-
-    float aspect = 800.f / 600.f;
-    float fov = 45.f / 180.f * 3.141592f;
-    float n = 0.1f;
-    float f = 100.f;
-
-    Mat4<float> P = Mat4<float>::projection(aspect, fov, n, f);
-
-    float alpha = 0;
-    float beta = 0;
-
-    float lastMouseX;
-    float lastMouseY;
+    Camera camera({ 1.0f, 2.0f, 6.0f }, { 0.f, 1.f, 0.f });
 
     // la boucle principale
     bool running = true;
-    bool firstMouse = true;
+    bool freeCamera = true;
 
     sf::Mouse::setPosition({ 400, 300 }, window);
+    window.setMouseCursorVisible(!freeCamera);
 
     while (running)
     {
@@ -78,26 +66,30 @@ int main()
             }
             else if (event.type == sf::Event::MouseMoved)
             {
-                float xPos = event.mouseMove.x;
-                float yPos = event.mouseMove.y;
-
-                if (firstMouse)
+                if (freeCamera)
                 {
-                    lastMouseX = xPos;
-                    lastMouseY = yPos;
+                    float xPos = event.mouseMove.x - 400.f;
+                    float yPos = event.mouseMove.y - 300.f;
 
-                    firstMouse = false;
+                    camera.ProcessMouseMovementInputs(-xPos, -yPos);
+                    sf::Mouse::setPosition({ 400, 300 }, window);
                 }
-
-                float xOffset = xPos - lastMouseX;
-                float yOffset = yPos - lastMouseY;
-                lastMouseX = xPos;
-                lastMouseY = yPos;
-
-                camera.ProcessMouseMovementInputs(-xOffset, -yOffset, false);
             }
             else if (event.type == sf::Event::KeyPressed)
             {
+                if (event.key.code == sf::Keyboard::F1)
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                if (event.key.code == sf::Keyboard::F2)
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                if (event.key.code == sf::Keyboard::F3)
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+
+                if (event.key.code == sf::Keyboard::F5)
+                {
+                    freeCamera = !freeCamera;
+                    window.setMouseCursorVisible(!freeCamera);
+                }
+
                 if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
                     camera.ProcessKeyboardInput(CameraMovement::FORWARD, true);
                 if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
@@ -126,6 +118,10 @@ int main()
                 if (event.key.code == sf::Keyboard::LShift || event.key.code == sf::Keyboard::RShift)
                     camera.ProcessKeyboardInput(CameraMovement::DOWN, false);
             }
+            else if (event.type == sf::Event::MouseWheelScrolled)
+            {
+                camera.ProcessMouseScrollInputs(event.mouseWheelScroll.delta);
+            }
         }
 
         sf::Time deltaTime = clock.restart();
@@ -133,6 +129,7 @@ int main()
 
         // Effacement des tampons de couleur/profondeur 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
         Mat4<float> V = camera.GetViewMatrix();
         Mat4<float> P = camera.GetProjectionMatrix(800, 600);

@@ -92,8 +92,8 @@ void Camera::ProcessMouseScrollInputs(float yOffset)
 	m_fov -= yOffset;
 	if (m_fov < 1.0f)
 		m_fov = 1.0f;
-	if (m_fov > 45.0f)
-		m_fov = 45.0f;
+	if (m_fov > 80.0f)
+		m_fov = 80.0f;
 }
 
 void Camera::UpdateCameraVectors()
