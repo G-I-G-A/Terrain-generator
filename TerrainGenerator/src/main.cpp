@@ -6,14 +6,10 @@
 #include <array>
 #include <filesystem>
 #include <iostream>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "Shader.h"
 #include "Texture.h"
 #include "Plane.h"
-#include "Mat4.h"
 
 // Les tableaux de sommets et d'indices pour la skybox
 constexpr std::array<float, 24> skyboxVertices = {
@@ -144,7 +140,7 @@ int main()
         }
     }
 
-    // Charger les shaders pour le skybox
+    // Charger les shaders pour la skybox
     Shader skyboxShader("path/to/skybox_vertex_shader.glsl", "path/to/skybox_fragment_shader.glsl");
 
     // la boucle principale
@@ -203,13 +199,17 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Calcul de la matrice de vue
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::rotate(view, -beta, glm::vec3(1.0f, 0.0f, 0.0f));
-        view = glm::rotate(view, -alpha, glm::vec3(0.0f, 1.0f, 0.0f));
+        Mat4<float> view = Mat4<float>::rotationX(-beta) * Mat4<float>::rotationY(-alpha);
 
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+        // Calcul de la matrice de projection
+        float aspect = 800.f / 600.f;
+        float fov = 45.f / 180.f * 3.141592f;
+        float n = 0.1f;
+        float f = 100.f;
+        Mat4<float> projection = Mat4<float>::projection(aspect, fov, n, f);
 
-        glm::mat4 VP = projection * view;
+        // Calcul de la matrice de vue-projection
+        Mat4<float> VP = projection * view;
 
         // Rendu du terrain
         terrain.renderTerrain(VP);
@@ -219,9 +219,9 @@ int main()
         skyboxShader.use();
 
         // Transmettre les matrices de vue et projection au shader
-        view = glm::mat4(glm::mat3(view)); // Élimine la translation de la matrice de vue
-        glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        Mat4<float> viewNoTranslation = view.toMat3().toMat4(); // Élimine la translation de la matrice de vue
+        glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "view"), 1, GL_FALSE, viewNoTranslation.data());
+        glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "projection"), 1, GL_FALSE, projection.data());
 
         // Dessin de la skybox
         glBindVertexArray(skyboxVAO);
