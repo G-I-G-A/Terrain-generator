@@ -46,7 +46,7 @@ public:
         generateTerrain();
     }
 
-    void generateTerrain(int seed = 10)
+    void generateTerrain(int seed = 0, float scale = 1.f)
     {
         float step = 16.0f / (m_size - 1);
         generateMap(step, seed);
@@ -58,15 +58,15 @@ public:
             for (int j = 0; j < m_size - 1; ++j) {
                 // Triangle 1
                 vertices.push_back(-1.0f + j * step);
-                vertices.push_back(m_map[i * m_size + j]);
+                vertices.push_back(m_map[i * m_size + j] * scale);
                 vertices.push_back(-1.0f + i * step);
 
                 vertices.push_back(-1.0f + (j + 1) * step);
-                vertices.push_back(m_map[i * m_size + j + 1]);
+                vertices.push_back(m_map[i * m_size + j + 1] * scale);
                 vertices.push_back(-1.0f + i * step);
 
                 vertices.push_back(-1.0f + (j + 1) * step);
-                vertices.push_back(m_map[(i + 1) * m_size + j + 1]);
+                vertices.push_back(m_map[(i + 1) * m_size + j + 1] * scale);
                 vertices.push_back(-1.0f + (i + 1) * step);
 
                 // Triangle 2
@@ -75,11 +75,11 @@ public:
                 vertices.push_back(-1.0f + i * step);
 
                 vertices.push_back(-1.0f + (j + 1) * step);
-                vertices.push_back(m_map[(i + 1) * m_size + j + 1]);
+                vertices.push_back(m_map[(i + 1) * m_size + j + 1] * scale);
                 vertices.push_back(-1.0f + (i + 1) * step);
 
                 vertices.push_back(-1.0f + j * step);
-                vertices.push_back(m_map[(i + 1) * m_size + j]);
+                vertices.push_back(m_map[(i + 1) * m_size + j] * scale);
                 vertices.push_back(-1.0f + (i + 1) * step);
             }
         }

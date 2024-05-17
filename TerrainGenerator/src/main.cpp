@@ -17,7 +17,7 @@ const unsigned int SCREEN_WIDTH = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 
 // Camera
-Camera camera({ 7.f, -10.f, 25.f }, { 0.f, 1.f, 0.f }, -90, 25);
+Camera camera({ 7.f, -7.5f, 25.f }, { 0.f, 1.f, 0.f }, -90, 25);
 
 // Mouse settings
 bool freeCamera = false;
@@ -35,6 +35,7 @@ float deltaTime = 0;
 
 // seed
 int seed = 0;
+float scale = 1.f;
 
 void SetWindowHints()
 {
@@ -170,6 +171,9 @@ int main()
     // Enable depth values
     glEnable(GL_DEPTH_TEST);
 
+    // Wireframe mode at start
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     // Initialise ImGUI
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -215,10 +219,11 @@ int main()
 
         ImGui::Separator();
         
-        ImGui::SliderInt("Integer Slider", &seed, 0, 1000);
+        ImGui::SliderInt("Seed", &seed, 0, 1000);
+        ImGui::SliderFloat("Scale", &scale, 0.5f, 15.f);
         if (ImGui::Button("Regenerate Terrain"))
         {
-            terrain.generateTerrain(seed);
+            terrain.generateTerrain(seed, scale);
         }
 
         ImGui::Separator();
