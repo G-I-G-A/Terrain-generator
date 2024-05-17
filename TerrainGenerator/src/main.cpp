@@ -32,9 +32,14 @@ int main()
 
     // Les putains de lignes de l’enfer
     glewExperimental = GL_TRUE;
-    glEnable(GL_DEPTH_TEST);
     if (glewInit())
         throw std::runtime_error("Error de merde");
+
+    // Set up OpenGL (optional)
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glClearDepth(1.f);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.f);
 
     TerrainF terrain(100);
     Camera camera({ 1.0f, 2.0f, 6.0f }, { 0.f, 1.f, 0.f });
@@ -88,6 +93,7 @@ int main()
                 {
                     freeCamera = !freeCamera;
                     window.setMouseCursorVisible(!freeCamera);
+                    sf::Mouse::setPosition({ 400, 300 }, window);
                 }
 
                 if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
@@ -127,7 +133,7 @@ int main()
         sf::Time deltaTime = clock.restart();
         camera.ProcessKeyboardInputs(deltaTime.asSeconds());
 
-        // Effacement des tampons de couleur/profondeur 
+        // Effacement des tampons de couleur/profondeur
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
