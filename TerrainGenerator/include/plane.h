@@ -45,10 +45,11 @@ public:
 
         generateTerrain();
     }
-    void generateTerrain()
+
+    void generateTerrain(int seed = 10)
     {
         float step = 4.0f / (m_size - 1);
-        generateMap(step);
+        generateMap(step, seed);
 
         // Generate terrain geometry
         // Each grid cell is represented by two triangles
@@ -91,8 +92,6 @@ public:
 
         glVertexAttribPointer(0, decltype(vertex_type::position)::ndim, GL_FLOAT, GL_FALSE, sizeof(vertex_type), 0);
         glEnableVertexAttribArray(0);
-        // glVertexAttribPointer(1, decltype(vertex_type::color)::ndim, GL_FLOAT, GL_FALSE, sizeof(vertex_type), reinterpret_cast<char*>(nullptr) + sizeof(vertex_type::position));
-        // glEnableVertexAttribArray(1);
     }
 
     void renderTerrain(const Mat4<float>& VP)
@@ -118,7 +117,7 @@ private:
     GLuint m_vao;
     GLuint m_vbo;
 
-    void generateMap(const float& step)
+    void generateMap(const float& step, int seed)
     {
         // Generate terrain heights
         m_map.resize(m_size * m_size);
@@ -130,7 +129,7 @@ private:
                 z = -1.0f + i * step;
 
                 // Define a simple height function (e.g., sine wave)
-                m_map[i * m_size + j] = perlin(x, z, 10);
+                m_map[i * m_size + j] = perlin(x, z, seed);
             }
         }
     }

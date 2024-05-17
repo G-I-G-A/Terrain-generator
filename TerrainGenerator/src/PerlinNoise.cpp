@@ -56,8 +56,6 @@ float perlin(float x, float y, int seed)
     n1 = dotGridGradient(x1, y1, x, y, seed);
     float ix1 = interpolate(n0, n1, sx);
 
-    std::cout << std::max(0.f, interpolate(ix0, ix1, sy));
-    std::cout << " " << std::endl;
     return std::max(0.f, interpolate(ix0, ix1, sy));
 }
 
@@ -69,9 +67,7 @@ std::vector<std::vector<float>> generatePerlinNoise(int width, int height, int s
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             noiseData[y][x] = perlin(x * 0.1, y * 0.1, seed);
-            std::cout << noiseData[y][x] << " ";
         }
-        std::cout << std::endl;
     }
 
     return noiseData;

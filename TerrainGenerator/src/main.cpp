@@ -17,10 +17,10 @@ const unsigned int SCREEN_WIDTH = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 
 // Camera
-Camera camera({ 0.f, 2.f, 3.f }, { 0.f, 1.f, 0.f });
+Camera camera({ 1.f, 3.f, 5.f }, { 0.f, 1.f, 0.f }, -90, -4);
 
 // Mouse settings
-bool freeCamera = true;
+bool freeCamera = false;
 bool firstMouse = true;
 float lastMouseX = SCREEN_WIDTH / 2.0f;
 float lastMouseY = SCREEN_HEIGHT / 2.0f;
@@ -31,6 +31,9 @@ bool cursorShown = true;
 // Time
 float currentTime, lastFrameTime = glfwGetTime();
 float deltaTime = 0;
+
+// seed
+int seed = 0;
 
 void SetWindowHints()
 {
@@ -71,39 +74,39 @@ void ProcessInputs(GLFWwindow* window)
     }
 
     // Process Camera movement
-    if (freeCamera)
-    {
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            camera.ProcessKeyboardInputs(CameraMovement::FORWARD);
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            camera.ProcessKeyboardInputs(CameraMovement::BACKWARD);
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            camera.ProcessKeyboardInputs(CameraMovement::LEFT);
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            camera.ProcessKeyboardInputs(CameraMovement::RIGHT);
-        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-            camera.ProcessKeyboardInputs(CameraMovement::DOWN);
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-            camera.ProcessKeyboardInputs(CameraMovement::UP);
-    }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboardInputs(CameraMovement::FORWARD);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboardInputs(CameraMovement::BACKWARD);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboardInputs(CameraMovement::LEFT);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboardInputs(CameraMovement::RIGHT);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.ProcessKeyboardInputs(CameraMovement::DOWN);
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        camera.ProcessKeyboardInputs(CameraMovement::UP);
 }
 
 void HandleMouseCallback(GLFWwindow* window, double xPos, double yPos)
 {
-    if (firstMouse)
+    if (freeCamera)
     {
+        if (firstMouse)
+        {
+            lastMouseX = xPos;
+            lastMouseY = yPos;
+
+            firstMouse = false;
+        }
+
+        float xOffset = xPos - lastMouseX;
+        float yOffset = yPos - lastMouseY;
         lastMouseX = xPos;
         lastMouseY = yPos;
 
-        firstMouse = false;
+        camera.ProcessMouseMovementInputs(xOffset, yOffset);
     }
-
-    float xOffset = xPos - lastMouseX;
-    float yOffset = yPos - lastMouseY;
-    lastMouseX = xPos;
-    lastMouseY = yPos;
-
-    camera.ProcessMouseMovementInputs(xOffset, yOffset);
 }
 
 void HandlescrollCallback(GLFWwindow* window, double xOffset, double yOffset)
@@ -162,9 +165,6 @@ int main()
     // Enable depth values
     glEnable(GL_DEPTH_TEST);
 
-    // Disable cursor at start
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
     // Initialise ImGUI
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -206,7 +206,15 @@ int main()
         // Imgui render
         ImGui::Begin("Configs");
         std::string fps = "FPS: " + std::to_string(static_cast<int>(1.f / deltaTime));
-        ImGui::Text(fps.c_str());
+        ImGui::Text(fps.c_str()); 
+
+        ImGui::Text("==========================================");
+        
+        ImGui::SliderInt("Integer Slider", &seed, 0, 1000);
+        if (ImGui::Button("Regenerate Terrain"))
+        {
+            terrain.generateTerrain(seed);
+        }
 
         ImGui::Text("==========================================");
         ImGui::Text("Escape: Close");
