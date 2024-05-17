@@ -7,17 +7,17 @@
 #include <SFML/Graphics.hpp>
 #include <filesystem>
 
-static std::string textureFolderPath = "Resources/Shaders/";
+static std::string textureFolderPath = "Resources/Textures/";
 
 struct Texture
 {
-    explicit Texture(const std::filesystem::path& path)
+    explicit Texture(const char* texturePath)
     {
         glGenTextures(1, &m_texture);
         glBindTexture(GL_TEXTURE_2D, m_texture);
 
         sf::Image image;
-        image.loadFromFile(textureFolderPath + path.generic_string());
+        image.loadFromFile(textureFolderPath + texturePath);
         auto size = image.getSize();
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getPixelsPtr());

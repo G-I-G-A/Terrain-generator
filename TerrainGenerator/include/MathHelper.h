@@ -41,10 +41,67 @@ struct Point3d
         , z(pt.z)
     {}
 
+    Point3d& operator+=(const Point3d& other)
+    {
+        x += other.x;
+        y += other.y;
+        z += other.z;
+        return *this;
+    }
+
+    Point3d& operator-=(const Point3d& other)
+    {
+        x -= other.x;
+        y -= other.y;
+        z -= other.z;
+        return *this;
+    }
+
     T x;
     T y;
     T z;
 };
+
+// Add
+template<typename T>
+Point3d<T> operator+(const Point3d<T>& p1, const Point3d<T>& p2)
+{
+    return Point3d<T>(p1.x + p2.x, p1.y + p2.y, p1.z + p2.z);
+}
+
+// Substract
+template<typename T>
+Point3d<T> operator-(const Point3d<T>& p1, const Point3d<T>& p2)
+{
+    return Point3d<T>(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
+}
+
+// Scalar
+template<typename T>
+Point3d<T> operator*(const Point3d<T>& point, const T& scalar)
+{
+    return Point3d<T>(point.x * scalar, point.y * scalar, point.z * scalar);
+}
+
+template<typename T>
+Point3d<T> operator*(const T& scalar, const Point3d<T>& point)
+{
+    return point * scalar;
+}
+
+// Dot product
+template<typename T>
+T operator*(const Point3d<T>& p1, const Point3d<T>& p2)
+{
+    return p1.x * p2.x + p1.y * p2.y + p1.z * p2.z;
+}
+
+// Element-wise multiplication
+template<typename T>
+Point3d<T> operator*(const Point3d<T>& p1, const Point3d<T>& p2)
+{
+    return Point3d<T>(p1.x * p2.x, p1.y * p2.y, p1.z * p2.z);
+}
 
 template<typename T>
 struct Point4d
@@ -200,6 +257,71 @@ Mat4<T> operator*(const Mat4<T>& op1, const Mat4<T>& op2)
     }
 
     return result;
+}
+
+namespace Math
+{
+    template<typename T>
+    T Radians(const T& degrees)
+    {
+        return degrees * 3.14159265f / 180.f;
+    }
+
+    template<typename T>
+    T Degrees(const T& radians)
+    {
+        return radians * 180.f / 3.14159265f;
+    }
+
+    template<typename T>
+    Point3d<T> Normalize(const Point3d<T>& point)
+    {
+        T length = std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
+        if (length == 0)
+        {
+            return point;
+        }
+
+        return { point.x / length, point.y / length, point.z / length };
+    }
+
+    template<typename T>
+    Point3d<T> Cross(const Point3d<T>& p1, const Point3d<T>& p2)
+    {
+        return {
+            p1.y * p2.z - p1.z * p2.y,
+            p1.z * p2.x - p1.x * p2.z,
+            p1.x * p2.y - p1.y * p2.x
+        };
+    }
+
+    template<typename T>
+    Mat4<T> LookAt(const Point3d<T>& position, const Point3d<T>& center, const Point3d<T>& up)
+    {
+        Point3d<T> f = Normalize(center - position); // Forward vector
+        Point3d<T> s = Normalize(Cross(f, up)); // Side vector
+        Point3d<T> u = Cross(s, f); // Up vector
+
+        Mat4<T> result = Mat4<T>::identity();
+
+        result(0, 0) = s.x;
+        result(0, 1) = u.x;
+        result(0, 2) = -f.x;
+
+        result(1, 0) = s.y;
+        result(1, 1) = u.y;
+        result(1, 2) = -f.y;
+
+        result(2, 0) = s.z;
+        result(2, 1) = u.z;
+        result(2, 2) = -f.z;
+
+        result(0, 3) = -s.x * position.x - s.y * position.y - s.z * position.z;
+        result(1, 3) = -u.x * position.x - u.y * position.y - u.z * position.z;
+        result(2, 3) = f.x * position.x + f.y * position.y + f.z * position.z;
+
+        return result;
+    }
 }
 
 #endif MATHHELPER_H
