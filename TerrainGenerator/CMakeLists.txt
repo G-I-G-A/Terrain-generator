@@ -20,4 +20,3 @@ target_link_libraries(TerrainGenerator
     ImGui-SFML::ImGui-SFML
     nlohmann_json::nlohmann_json
 )
-
