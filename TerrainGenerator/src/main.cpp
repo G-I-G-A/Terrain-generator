@@ -8,8 +8,6 @@
 
 #include "Shader.h"
 #include "Texture.h"
-#include "Triangle.h"
-#include "Cube.h"
 #include "Plane.h"
 
 int main()
@@ -23,7 +21,7 @@ int main()
     // activation de la fenêtre
     window.setActive(true);
 
-    using CubeF = Cube<float>;
+    using TerrainF = Terrain<float>;
 
     // Les putains de lignes de l’enfer
     glewExperimental = GL_TRUE;
@@ -31,7 +29,7 @@ int main()
     if (glewInit())
         throw std::runtime_error("Error de merde");
 
-    CubeF cube;
+    TerrainF terrain(100);
 
     float aspect = 800.f / 600.f;
     float fov = 45.f / 180.f * 3.141592f;
@@ -48,9 +46,6 @@ int main()
     bool leftMouseButtonPressed = false;
 
     sf::Mouse::setPosition({ 400, 300 }, window);
-
-    TerrainGenerator terrainGenerator(100);
-    terrainGenerator.generateTerrain();
 
     while (running)
     {
@@ -82,11 +77,6 @@ int main()
                 {
                     alpha += coef * dx;
                     beta += -coef * dy;
-                }
-                else
-                {
-                    cube.alpha += coef * dx;
-                    cube.beta += -coef * dy;
                 }
             }
             else if (event.type == sf::Event::MouseButtonPressed)
@@ -120,13 +110,9 @@ int main()
         Mat4<float> VP = P * V;
 
         // Rendu du terrain
-        terrainGenerator.renderTerrain(VP);
+        terrain.renderTerrain(VP);
 
-        // Rendu du cube
-        cube.update();
-        cube.render(VP);
-
-        // Affichage de la trame courante
+        // Affichage de la frame courante
         window.display();
     }
 

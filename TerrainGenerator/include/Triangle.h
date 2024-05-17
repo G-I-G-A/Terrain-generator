@@ -41,6 +41,8 @@ public:
 
         glBufferData(GL_ARRAY_BUFFER, sizeof(m_points), m_points.data(), GL_STATIC_DRAW);
 
+        m_shader.use();
+
         // /!\ Attention, ca ne marche que si T=float : c'est un peu dommage.
         glVertexAttribPointer(0, decltype(vertex_type::position)::ndim, GL_FLOAT, GL_FALSE, sizeof(vertex_type), 0);
         glEnableVertexAttribArray(0);
