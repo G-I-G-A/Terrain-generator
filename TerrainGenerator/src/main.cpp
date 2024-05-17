@@ -94,7 +94,7 @@ int main()
                 lastMouseX = xPos;
                 lastMouseY = yPos;
 
-                camera.ProcessMouseMovementInputs(xOffset, yOffset, false);
+                camera.ProcessMouseMovementInputs(-xOffset, -yOffset, false);
             }
             else if (event.type == sf::Event::KeyPressed)
             {

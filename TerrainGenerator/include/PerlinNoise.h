@@ -1,4 +1,4 @@
-#ifndef PERLIN_NOISE_H
+    #ifndef PERLIN_NOISE_H
 #define PERLIN_NOISE_H
 
 #include <cmath>

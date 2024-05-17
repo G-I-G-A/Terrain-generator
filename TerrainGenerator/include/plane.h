@@ -48,7 +48,7 @@ public:
     }
     void generateTerrain()
     {
-        float step = 8.0f / (m_size - 1);
+        float step = 4.0f / (m_size - 1);
         generateMap(step);
 
         // Generate terrain geometry
