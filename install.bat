@@ -22,4 +22,10 @@ cd %currentPath%
 cmake -DCMAKE_TOOLCHAIN_FILE=%currentPath%/Dependencies/vcpkg/scripts/buildsystems/vcpkg.cmake -S %currentPath% -B %currentPath%/build
 
 ECHO =============================
+ECHO Initializing CMake project
+ECHO =============================
+
+xcopy .\Resources\ .\build\TerrainGenerator\Resources\ /s /e
+
+ECHO =============================
 ECHO Install done
