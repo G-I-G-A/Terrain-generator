@@ -17,7 +17,7 @@ const unsigned int SCREEN_WIDTH = 800;
 const unsigned int SCREEN_HEIGHT = 600;
 
 // Camera
-Camera camera({ 1.f, 3.f, 5.f }, { 0.f, 1.f, 0.f }, -90, -4);
+Camera camera({ 7.f, -10.f, 25.f }, { 0.f, 1.f, 0.f }, -90, 25);
 
 // Mouse settings
 bool freeCamera = false;
@@ -116,7 +116,7 @@ void HandleMouseCallback(GLFWwindow* window, double xPos, double yPos)
 
 void HandlescrollCallback(GLFWwindow* window, double xOffset, double yOffset)
 {
-    camera.ProcessMouseScrollInputs(yOffset);
+    // camera.ProcessMouseScrollInputs(yOffset);
 }
 
 void HandleFramebufferSize(GLFWwindow* windo, int width, int height)
